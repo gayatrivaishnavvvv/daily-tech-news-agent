@@ -1,0 +1,498 @@
+{
+  "name": "My workflow 5",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8e712c37-16be-4dae-8e3e-74adb84149b9",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "025a0d88-1a19-4620-90b2-ecc38278a8ef",
+      "name": "RSS Read"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "506455cc-410c-418f-8673-17f81d39f8c5",
+              "leftValue": "={{ $json.isoDate }}",
+              "rightValue": "={{ $now.minus({ hours: 24 }) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        416,
+        0
+      ],
+      "id": "92e6fcad-edd4-45a3-b469-630b576ed3a8",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following tech article details:\nTitle: {{ $json.title }}\nDescription: {{ $json.contentSnippet }}\n\nPlease do the following:\n1. Categorize it into exactly ONE of these buckets: AI, Cybersecurity, Software, or Hardware.\n2. Write a highly concise, 1-sentence summary of the core news.\n\nReturn your final answer strictly in this format:\nCategory: [Insert Category] | Summary: [Insert Summary]",
+        "batching": {
+          "batchSize": 1,
+          "delayBetweenBatches": 3000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        624,
+        0
+      ],
+      "id": "022286ca-ce29-43f9-92db-dd9202ab1f1d",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsCode": "let report = \"🚀 **DAILY TECH NEWS RESEARCH REPORT** 🚀\\n\";\nreport += \"=========================================\\n\\n\";\n\nfor (const item of $input.all()) {\n  // Groq / Langchain nodes usually return the text inside 'text' or 'response'\n  let aiText = item.json.text || item.json.response || \"\";\n  aiText = aiText.trim();\n  \n  if (aiText) {\n    let nextLine = `${aiText}\\n\\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\\n\\n`;\n    \n    // Safety check: If adding this breaks 1900 chars, stop immediately to avoid Discord errors\n    if ((report + nextLine).length > 1900) {\n      report += \"⚠️ *Report shortened to fit Discord's size limit.*\";\n      break; \n    }\n    \n    report += nextLine;\n  }\n}\n\n// Return exactly ONE item containing the entire combined report text\nreturn [{ json: { finalReport: report.trim() } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        976,
+        0
+      ],
+      "id": "4ef48759-5003-4025-b93b-db2a5be97536",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        624,
+        192
+      ],
+      "id": "45a34878-c6a6-4616-ba3f-7818bc149a0c",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "X3z7UAn8EQaEVfiC",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discordapp.com/api/webhooks/1514894976838795324/pLibS4UTHwlgmh-QLFeONA4Mev5BHjC-pjG095qY0WGDUBFO6DykcZzyXkbuPje6WfOi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.finalReport }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "bd6f003f-1220-439b-a81d-795ad28489e8",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -448
+      ],
+      "id": "7ff19215-294d-4a9c-8775-5745b410efbd",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert news editor. Below is a list of 20 categorized technical news summaries. \n\nPlease compile them into a single, beautifully formatted markdown digest report for a Discord channel.\n\nData:\n{{ JSON.stringify($json) }}\n\nStrict Instructions:\n1. Start with a prominent header: \"🚀 **DAILY TECH NEWS RESEARCH REPORT** 🚀\"\n2. Group the summaries neatly or list them cleanly using dividers.\n3. Your entire final response must be strictly under 1,900 characters so it does not error out on Discord. If you have too many items to fit under 1,900 characters, truncate the list intelligently and add a clean end marker.",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        832,
+        -448
+      ],
+      "id": "4c489306-c7ce-4d14-8e69-a61d2b660057",
+      "name": "Final AI Compiler"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        848,
+        -240
+      ],
+      "id": "49f2d395-bee7-4da4-9aa9-a4a47b641ae5",
+      "name": "Groq Compiler Model",
+      "credentials": {
+        "groqApi": {
+          "id": "X3z7UAn8EQaEVfiC",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        -448
+      ],
+      "id": "129cf3a6-0dc5-4254-959b-3dfb1f064dbf",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "url": "https://techcrunch.com/feed/",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.2,
+      "position": [
+        16,
+        -448
+      ],
+      "id": "5e7a84ef-a9e2-4c1a-9471-efb1c3861936",
+      "name": "RSS Read1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "506455cc-410c-418f-8673-17f81d39f8c5",
+              "leftValue": "={{ $json.isoDate }}",
+              "rightValue": "={{ $now.minus({ hours: 24 }) }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        -448
+      ],
+      "id": "5a1e6017-4d7b-47ee-8e3a-c7cfb6590f8b",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following tech article details:\nTitle: {{ $json.title }}\nDescription: {{ $json.contentSnippet }}\n\nPlease do the following:\n1. Categorize it into exactly ONE of these buckets: AI, Cybersecurity, Software, or Hardware.\n2. Write a highly concise, 1-sentence summary of the core news.\n\nReturn your final answer strictly in this format:\nCategory: [Insert Category] | Summary: [Insert Summary]",
+        "batching": {
+          "batchSize": 1,
+          "delayBetweenBatches": 3000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        -448
+      ],
+      "id": "b371dc3d-7cf2-453f-9c57-b618d5451644",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.1-8b-instant",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        432,
+        -240
+      ],
+      "id": "4a538ef8-3935-40e0-a1aa-a44d9e9adeb2",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "X3z7UAn8EQaEVfiC",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://discordapp.com/api/webhooks/1514894976838795324/pLibS4UTHwlgmh-QLFeONA4Mev5BHjC-pjG095qY0WGDUBFO6DykcZzyXkbuPje6WfOi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "content",
+              "value": "={{ $json.text }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1072,
+        -448
+      ],
+      "id": "8579c8d1-3d36-405b-bb14-b30ef1e59843",
+      "name": "HTTP Request1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "RSS Read",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Final AI Compiler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Final AI Compiler": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Compiler Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Final AI Compiler",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "RSS Read1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RSS Read1": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "8c75f62d-a9d3-4bd6-bb08-3363e1d81a71",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f912bc93f0e53aab4bd681905df72bc8f60ce869a879f8baf66751ef36e41e8e"
+  },
+  "nodeGroups": [],
+  "id": "dclw4pjwgSFxtR55",
+  "tags": []
+}
