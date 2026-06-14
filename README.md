@@ -1,25 +1,26 @@
 # 🚀 Daily Tech News Research Agent
 
-An automated AI-powered news aggregation workflow built with **n8n**, **Groq LLM**, **TechCrunch RSS Feed**, and **Discord Webhooks**.
+An AI-powered news automation workflow built with **n8n**, **Groq LLM**, **TechCrunch RSS Feed**, and **Discord Webhooks**.
 
-The workflow fetches the latest tech news daily, summarizes articles using AI, categorizes them, compiles a report, and automatically posts it to a Discord channel.
-
----
-
-## 📌 Features
-
-- Automated daily execution
-- Fetches latest articles from TechCrunch RSS feed
-- Filters articles published within the last 24 hours
-- AI-powered categorization
-- AI-generated concise summaries
-- Aggregates multiple news items
-- Generates Discord-friendly markdown reports
-- Automatically posts reports to Discord
+This workflow automatically collects the latest technology news, categorizes and summarizes articles using AI, generates a daily digest, and posts it directly to a Discord channel.
 
 ---
 
-## 🏗️ Workflow Architecture
+## 📖 Project Overview
+
+The workflow runs automatically every day and performs the following tasks:
+
+1. Fetches the latest articles from TechCrunch RSS feed.
+2. Filters articles published within the last 24 hours.
+3. Uses AI to categorize each article.
+4. Generates concise summaries.
+5. Aggregates all summaries into a single report.
+6. Formats the report for Discord.
+7. Publishes the report via Discord webhook.
+
+---
+
+## 🏗 Workflow Architecture
 
 ```text
 Schedule Trigger
@@ -31,8 +32,8 @@ Schedule Trigger
       Filter
        │
        ▼
- Basic LLM Chain
-(Categorize + Summarize)
+ AI Categorization &
+ Summarization Chain
        │
        ▼
     Aggregate
@@ -46,116 +47,48 @@ Schedule Trigger
 
 ---
 
-## ⚙️ Workflow Nodes
+## ⚙️ Technologies Used
 
-### 1. Schedule Trigger
-
-Runs every day at 7:00 AM.
-
-**Purpose:**
-- Starts the workflow automatically.
-
----
-
-### 2. RSS Feed Read
-
-**Source:**
-
-https://techcrunch.com/feed/
-
-**Purpose:**
-- Retrieves the latest articles from TechCrunch.
+* n8n
+* Groq API
+* Llama 3.1 8B Instant
+* TechCrunch RSS Feed
+* Discord Webhooks
 
 ---
 
-### 3. Filter
+## 🤖 AI Features
 
-Filters articles published in the last 24 hours.
+### Article Categorization
 
-**Condition:**
+Each article is automatically classified into one of the following categories:
 
-```javascript
-$json.isoDate > $now.minus({ hours: 24 })
-```
+* AI
+* Cybersecurity
+* Software
+* Hardware
 
----
+### Article Summarization
 
-### 4. Basic LLM Chain
+The AI generates a concise one-sentence summary of each article.
 
-**Model:** `llama-3.1-8b-instant`
+### Report Generation
 
-**Provider:** Groq
-
-**Tasks:**
-
-- Categorize article into:
-  - AI
-  - Cybersecurity
-  - Software
-  - Hardware
-
-- Generate a concise one-sentence summary.
-
-**Output Example:**
-
-```text
-Category: AI | Summary: OpenAI launched a new enterprise AI platform.
-```
+A second AI model compiles all summaries into a Discord-friendly daily report.
 
 ---
 
-### 5. Aggregate
+## 📂 Workflow Components
 
-Combines all summarized articles into a single collection.
-
----
-
-### 6. Final AI Compiler
-
-**Model:** `llama-3.1-8b-instant`
-
-Creates a Discord-friendly report:
-
-- Markdown formatted
-- Maximum 1900 characters
-- Intelligent truncation if needed
-
----
-
-### 7. Discord Webhook
-
-Posts the final report directly to a Discord channel.
-
----
-
-## 🤖 AI Models Used
-
-| Purpose | Model |
-|----------|---------|
-| News Categorization | llama-3.1-8b-instant |
-| News Summarization | llama-3.1-8b-instant |
-| Final Report Generation | llama-3.1-8b-instant |
-
-Provider: **Groq**
-
----
-
-## 📰 Categories Supported
-
-- AI
-- Cybersecurity
-- Software
-- Hardware
-
----
-
-## 📷 Workflow Screenshot
-
-Add your workflow screenshot here:
-
-```markdown
-![Workflow](screenshots/workflow.png)
-```
+| Node              | Purpose                             |
+| ----------------- | ----------------------------------- |
+| Schedule Trigger  | Runs workflow daily                 |
+| RSS Feed Read     | Fetches TechCrunch articles         |
+| Filter            | Keeps only recent articles          |
+| Basic LLM Chain   | Categorizes and summarizes articles |
+| Aggregate         | Combines all summaries              |
+| Final AI Compiler | Creates final Discord report        |
+| HTTP Request      | Sends report to Discord             |
 
 ---
 
@@ -164,19 +97,17 @@ Add your workflow screenshot here:
 ```markdown
 🚀 DAILY TECH NEWS RESEARCH REPORT 🚀
 
-━━━━━━━━━━━━━━
-
 🤖 AI
-• OpenAI released new reasoning models.
+• OpenAI introduced new enterprise AI capabilities.
 
 🔐 Cybersecurity
-• Researchers discovered a major vulnerability.
+• Researchers disclosed a critical security vulnerability.
 
 💻 Software
-• GitHub launched new Copilot features.
+• GitHub released updates for Copilot.
 
 ⚙️ Hardware
-• Nvidia unveiled next-generation AI chips.
+• Nvidia announced next-generation AI chips.
 
 ━━━━━━━━━━━━━━
 End of Report
@@ -184,35 +115,31 @@ End of Report
 
 ---
 
-## 🛠️ Tech Stack
+## 📸 Screenshots
 
-- n8n
-- Groq API
-- TechCrunch RSS Feed
-- Discord Webhooks
-- Llama 3.1 8B Instant
+### Workflow Overview
+
+Add your workflow screenshot:
+
+```markdown
+![Workflow](image.png)
+```
 
 ---
 
-## 🚀 Setup
+## 🚀 Setup Instructions
 
 ### 1. Import Workflow
 
-Import the provided `workflow.json` into n8n.
+Import `workflow5.json` into n8n.
 
-### 2. Configure Groq Credentials
+### 2. Configure Groq
 
-Add your Groq API key inside n8n credentials.
+Create a Groq API key and configure it inside n8n credentials.
 
 ### 3. Configure Discord Webhook
 
-Replace:
-
-```text
-YOUR_DISCORD_WEBHOOK_URL
-```
-
-with your Discord webhook URL.
+Replace the webhook URL with your own Discord webhook.
 
 ### 4. Activate Workflow
 
@@ -220,49 +147,50 @@ Enable the workflow and let it run automatically.
 
 ---
 
-## 🔒 Security Notes
+## 🔒 Security
 
-Before uploading to GitHub:
+Before publishing your workflow:
 
-- Remove Groq API credentials
-- Remove Discord webhook URLs
-- Do not expose secrets publicly
+* Remove API keys
+* Remove Discord webhook URLs
+* Do not commit credentials
+* Use environment variables when possible
 
 ---
 
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```text
 daily-tech-news-agent/
 │
 ├── README.md
-├── workflow.json
-│
-└── screenshots/
-    └── workflow.png
+├── workflow5.json
+├── image.png
+└── Screenshot 2026-06-14 153747.png
 ```
 
 ---
 
-## 🎯 Future Improvements
+## 🔮 Future Improvements
 
-- Multiple RSS sources
-- Email notifications
-- Telegram integration
-- Slack integration
-- News deduplication
-- Sentiment analysis
-- Historical news storage
-- Trend analysis dashboard
+* Multiple RSS sources
+* Slack integration
+* Telegram integration
+* Email reports
+* News deduplication
+* Trend analysis dashboard
+* Database storage for historical reports
 
 ---
 
 ## 📄 License
 
-MIT License
+This project is open-source and available under the MIT License.
 
 ---
 
 ## 👩‍💻 Author
 
-Built using n8n, Groq, RSS feeds, and Discord automation to deliver daily AI-powered technology news reports.
+Gayatri Vaishnav
+
+Built as an AI automation project using n8n, Groq, RSS feeds, and Discord integration.
